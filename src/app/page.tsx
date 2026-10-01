@@ -1,4 +1,12 @@
-import { ArrowRight, BookOpen, Gamepad2, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import {
+  ArrowRight,
+  BookOpen,
+  Brain,
+  Gamepad2,
+  Sparkles,
+  Wrench,
+} from 'lucide-react';
 
 const areas = [
   {
@@ -16,9 +24,30 @@ const areas = [
     href: '/play',
   },
   {
-    title: 'Discover',
+    title: 'Puzzles',
     description:
-      'Interesting facts, random discoveries, experiments, and unexpected things.',
+      'Logic problems, riddles, brain teasers, and challenges for curious minds.',
+    icon: Brain,
+    href: '/puzzles',
+  },
+  {
+    title: 'Quizzes',
+    description:
+      'Trivia, personality, compatibility, IQ-style challenges, and more.',
+    icon: Sparkles,
+    href: '/quizzes',
+  },
+  {
+    title: 'Productivity',
+    description:
+      'Small tools and useful experiences designed to help you get things done.',
+    icon: Wrench,
+    href: '/productivity',
+  },
+  {
+    title: 'Explore',
+    description:
+      'Interesting facts, unexpected discoveries, random experiences, and more.',
     icon: Sparkles,
     href: '/explore',
   },
@@ -26,8 +55,8 @@ const areas = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-6 py-20 lg:px-8">
+    <main>
+      <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-7xl items-center px-6 py-20 lg:px-8">
         <div className="max-w-4xl">
           <p className="mb-6 text-sm font-medium uppercase tracking-[0.25em] text-muted-foreground">
             Welcome to WonderBox
@@ -46,58 +75,74 @@ export default function Home() {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4">
-            <a
+            <Link
               href="#explore"
               className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-80"
             >
               Start exploring
               <ArrowRight className="size-4" />
-            </a>
+            </Link>
 
-            <a
-              href="#about"
+            <Link
+              href="/explore"
               className="inline-flex items-center rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted"
             >
-              What is WonderBox?
-            </a>
+              Discover WonderBox
+            </Link>
           </div>
         </div>
+      </section>
 
-        <div id="explore" className="mt-24 grid gap-4 md:grid-cols-3">
-          {areas.map((area) => {
-            const Icon = area.icon;
+      <section id="explore" className="border-t border-border bg-muted/20">
+        <div className="mx-auto w-full max-w-7xl px-6 py-24 lg:px-8">
+          <div className="mb-12">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              Explore
+            </p>
 
-            return (
-              <a
-                key={area.title}
-                href={area.href}
-                className="group rounded-2xl border border-border bg-card p-6 transition-transform hover:-translate-y-1"
-              >
-                <div className="mb-8 flex size-11 items-center justify-center rounded-xl bg-muted">
-                  <Icon className="size-5" />
-                </div>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+              Find something to do.
+            </h2>
+          </div>
 
-                <h2 className="text-xl font-semibold">{area.title}</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {areas.map((area) => {
+              const Icon = area.icon;
 
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                  {area.description}
-                </p>
+              return (
+                <Link
+                  key={area.title}
+                  href={area.href}
+                  className="group rounded-2xl border border-border bg-card p-6 transition-transform hover:-translate-y-1"
+                >
+                  <div className="mb-8 flex size-11 items-center justify-center rounded-xl bg-muted">
+                    <Icon className="size-5" />
+                  </div>
 
-                <div className="mt-6 flex items-center gap-2 text-sm font-medium">
-                  Explore
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                </div>
-              </a>
-            );
-          })}
+                  <h3 className="text-xl font-semibold">{area.title}</h3>
+
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    {area.description}
+                  </p>
+
+                  <div className="mt-6 flex items-center gap-2 text-sm font-medium">
+                    Explore
+                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
+      </section>
 
-        <section id="about" className="mt-24 max-w-2xl">
+      <section className="mx-auto w-full max-w-7xl px-6 py-24 lg:px-8">
+        <div className="max-w-2xl">
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
             The idea
           </p>
 
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight">
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
             There should always be something interesting to do.
           </h2>
 
@@ -106,7 +151,7 @@ export default function Home() {
             entertaining, curious, and meaningful digital experiences. The goal
             is simple: open WonderBox and find something worth your time.
           </p>
-        </section>
+        </div>
       </section>
     </main>
   );
