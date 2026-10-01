@@ -1,21 +1,145 @@
 // use prisma-8
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  username  String?
-  name      String?
-  posts     Post[]
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+enum ContentType {
+  BOOK
+  STORY
+  POEM
+  NOVEL
+  NEWS
+  ARTICLE
+  PDF
+  DAILY_UPDATE
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ActivityType {
+  GAME
+  PUZZLE
+  QUIZ
+  TOOL
+  EXPERIENCE
+}
+
+enum ActivityStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id        String   @id @default(cuid(2))
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  savedItems SavedItem[]
+  favorites  Favorite[]
+}
+
+model Category {
+  id          String   @id @default(cuid(2))
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  contentItems ContentItem[]
+  activities   Activity[]
+}
+
+model ContentItem {
+  id          String        @id @default(cuid(2))
+  title       String
+  slug        String        @unique
+  description String?
+  type        ContentType
+  status      ContentStatus @default(DRAFT)
+  author      String?
+  sourceName  String?
+  sourceUrl   String?
+  coverImage  String?
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now())
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  savedBy     SavedItem[]
+  favoritedBy Favorite[]
+
+  @@index([type])
+  @@index([status])
+  @@index([categoryId])
+  @@index([publishedAt])
+}
+
+model Activity {
+  id          String         @id @default(cuid(2))
+  title       String
+  slug        String         @unique
+  description String?
+  type        ActivityType
+  difficulty  Difficulty?
+  status      ActivityStatus @default(DRAFT)
+  thumbnail   String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now())
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([difficulty])
+  @@index([categoryId])
+}
+
+model SavedItem {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+
+  userId        String
+  user          User @relation(fields: [userId], references: [id])
+
+  contentItemId String
+  contentItem   ContentItem @relation(
+    fields: [contentItemId],
+    references: [id]
+  )
+
+  @@unique([userId, contentItemId])
+  @@index([userId])
+  @@index([contentItemId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid(2))
+  createdAt DateTime @default(now())
+
+  userId        String
+  user          User @relation(fields: [userId], references: [id])
+
+  contentItemId String
+  contentItem   ContentItem @relation(
+    fields: [contentItemId],
+    references: [id]
+  )
+
+  @@unique([userId, contentItemId])
+  @@index([userId])
+  @@index([contentItemId])
 }
