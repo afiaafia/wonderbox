@@ -1,6 +1,7 @@
 import { BookOpen, Newspaper, Sparkles } from 'lucide-react';
 
-import { readingItems, ReadingGrid } from '@/features/reading';
+import { ReadingGrid } from '@/features/reading';
+import { getReadingItems } from '@/server/reading/reading.service';
 
 const categories = [
   {
@@ -17,9 +18,11 @@ const categories = [
   },
 ];
 
-export default function ReadingPage() {
-  const featuredItems = readingItems.filter((item) => item.featured);
-  const otherItems = readingItems.filter((item) => !item.featured);
+export default async function ReadingPage() {
+  const readingItems = await getReadingItems();
+
+  const featuredItems = readingItems.slice(0, 1);
+  const otherItems = readingItems.slice(1);
 
   return (
     <main>
@@ -86,7 +89,11 @@ export default function ReadingPage() {
           </h2>
         </div>
 
-        <ReadingGrid items={otherItems} />
+        {otherItems.length > 0 ? (
+          <ReadingGrid items={otherItems} />
+        ) : (
+          <p className="text-muted-foreground">Nothing to read yet.</p>
+        )}
       </section>
     </main>
   );
