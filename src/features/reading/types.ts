@@ -15,6 +15,7 @@ export type ReadingItem = {
   type: ReadingContentType;
   author?: string;
   source?: string;
+  sourceUrl?: string;
   coverImage?: string;
   href: string;
   featured?: boolean;

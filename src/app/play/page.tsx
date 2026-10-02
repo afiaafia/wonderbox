@@ -1,16 +1,18 @@
+import { SectionHeading } from '@/components/shared/section-heading';
+import { TapChallenge } from '@/features/play';
+
 export default function PlayPage() {
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-6 py-20 lg:px-8">
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
-        WonderBox
-      </p>
+    <main className="mx-auto min-h-[calc(100vh-8rem)] w-full max-w-5xl px-6 py-14 sm:py-20 lg:px-8">
+      <SectionHeading
+        eyebrow="Play World"
+        title="10-Second Tap Challenge"
+        description="How fast can you tap? You have ten seconds to set a score and beat your personal best."
+      />
 
-      <h1 className="mt-4 text-5xl font-semibold tracking-tight">Play</h1>
-
-      <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
-        Games, reactions, memory challenges, trivia, and interactive
-        experiences.
-      </p>
+      <div className="mt-10 sm:mt-12">
+        <TapChallenge />
+      </div>
     </main>
   );
 }
