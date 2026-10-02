@@ -56,6 +56,55 @@ const areas = [
 export default function Home() {
   return (
     <main>
+      <section className="border-y border-border bg-foreground text-background">
+        <div className="mx-auto w-full max-w-7xl px-6 py-20 lg:px-8">
+          <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-background/60">
+                Try something now
+              </p>
+
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
+                A few things to do before you leave.
+              </h2>
+
+              <p className="mt-5 leading-7 text-background/60">
+                Test your reflexes, solve a riddle, challenge your knowledge, or
+                focus for twenty-five minutes.
+              </p>
+            </div>
+
+            <Link
+              href="/play"
+              className="inline-flex shrink-0 items-center justify-center rounded-full bg-background px-6 py-3 text-sm font-semibold text-foreground"
+            >
+              Play now
+              <ArrowRight className="ml-2 size-4" />
+            </Link>
+          </div>
+
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ['10-Second Tap', '/play'],
+              ['Brain Teasers', '/puzzles'],
+              ['Quick Trivia', '/quizzes'],
+              ['Focus Timer', '/productivity'],
+            ].map(([title, href]) => (
+              <Link
+                key={title}
+                href={href}
+                className="rounded-2xl border border-background/15 p-5 transition-colors hover:bg-background/10"
+              >
+                <p className="font-medium">{title}</p>
+
+                <p className="mt-2 text-sm text-background/50">
+                  Open experience →
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
       <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-7xl items-center px-6 py-20 lg:px-8">
         <div className="max-w-4xl">
           <p className="mb-6 text-sm font-medium uppercase tracking-[0.25em] text-muted-foreground">

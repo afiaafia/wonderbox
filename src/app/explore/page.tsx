@@ -8,25 +8,61 @@ const discoveries = [
     category: 'Space',
     title: 'A day on Venus is longer than its year.',
     description:
-      'Venus rotates so slowly that one rotation takes longer than one trip around the Sun.',
+      'Venus rotates so slowly that one rotation takes longer than its trip around the Sun.',
   },
   {
     category: 'Nature',
     title: 'Bananas are botanically berries.',
     description:
-      'Botanical definitions classify berries by how they develop from a flower, which makes some familiar fruits surprising examples.',
+      'Botanical definitions of berries differ from everyday usage, creating some surprising examples.',
   },
   {
     category: 'Technology',
-    title: 'The first computer mouse was made of wood.',
+    title: 'The first computer mouse had a wooden casing.',
     description:
-      'An early computer mouse prototype used a wooden casing and a pair of wheels to track movement.',
+      'An early computer mouse prototype used a wooden housing and wheels to track movement.',
   },
   {
     category: 'Ocean',
-    title: 'Most of the ocean remains unexplored.',
+    title: 'The deep ocean is still difficult to explore.',
     description:
-      'Large portions of the deep ocean are difficult to observe because of extreme pressure, darkness, and distance.',
+      'Extreme pressure, darkness, and distance make deep-sea exploration technically challenging.',
+  },
+  {
+    category: 'Language',
+    title: 'Some languages have no direct equivalent for common English words.',
+    description:
+      'Languages divide concepts differently, so translation often depends on context rather than one-to-one word matching.',
+  },
+  {
+    category: 'History',
+    title: 'Libraries have existed for thousands of years.',
+    description:
+      'Ancient civilizations created organized collections of written records long before modern public libraries.',
+  },
+  {
+    category: 'Physics',
+    title: 'Light travels extremely fast, but not infinitely fast.',
+    description:
+      'Light in a vacuum travels at approximately 300,000 kilometers per second.',
+  },
+  {
+    category: 'Animals',
+    title: 'Octopuses have three hearts.',
+    description:
+      'Two hearts pump blood toward the gills while another circulates it through the rest of the body.',
+  },
+  {
+    category: 'Earth',
+    title: 'Earth is not a perfect sphere.',
+    description:
+      'Its rotation causes the planet to bulge slightly around the equator.',
+  },
+  {
+    category: 'Mathematics',
+    title: 'Zero is an important number and a concept in its own right.',
+    description:
+      'Zero serves both as a number and as a positional placeholder in our number system.',
   },
 ];
 
@@ -36,7 +72,13 @@ export default function ExplorePage() {
   const discovery = discoveries[index];
 
   function randomize() {
-    setIndex((current) => (current + 1) % discoveries.length);
+    let next = Math.floor(Math.random() * discoveries.length);
+
+    if (next === index) {
+      next = (next + 1) % discoveries.length;
+    }
+
+    setIndex(next);
   }
 
   return (
@@ -50,8 +92,7 @@ export default function ExplorePage() {
       </h1>
 
       <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
-        Interesting facts, unexpected discoveries, and things you did not know
-        you wanted to explore.
+        Facts, ideas, discoveries, and small pieces of knowledge worth knowing.
       </p>
 
       <section className="mt-12 rounded-3xl border border-border bg-card p-6 sm:p-10">
