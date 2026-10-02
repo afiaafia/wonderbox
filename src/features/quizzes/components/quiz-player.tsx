@@ -11,11 +11,7 @@ import {
   Trophy,
 } from 'lucide-react';
 
-import type {
-  PersonalityQuizDefinition,
-  QuizDefinition,
-  TriviaQuizDefinition,
-} from '../types';
+import type { PersonalityQuizDefinition, QuizDefinition } from '../types';
 
 type QuizPlayerProps = {
   quiz: QuizDefinition;
@@ -47,11 +43,15 @@ function getPersonalityResult(
 
 export function QuizPlayer({ quiz }: QuizPlayerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+
   const [answers, setAnswers] = useState<AnswerMap>({});
+
   const [finished, setFinished] = useState(false);
+
   const [shareMessage, setShareMessage] = useState('');
 
   const currentQuestion = quiz.questions[currentIndex];
+
   const totalQuestions = quiz.questions.length;
 
   const selectedAnswer = currentQuestion
@@ -66,11 +66,11 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
       return 0;
     }
 
-    return quiz.questions.reduce((score, question) => {
-      return (
-        score + (answers[question.id] === question.correctOptionId ? 1 : 0)
-      );
-    }, 0);
+    return quiz.questions.reduce(
+      (score, question) =>
+        score + (answers[question.id] === question.correctOptionId ? 1 : 0),
+      0
+    );
   }, [answers, quiz]);
 
   function selectAnswer(answerId: string) {
@@ -151,6 +151,7 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
 
     try {
       await navigator.clipboard.writeText(shareText);
+
       setShareMessage('Result copied to your clipboard.');
     } catch {
       setShareMessage('Clipboard access is unavailable in this browser.');
@@ -285,7 +286,9 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
         <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
           <div
             className="h-full rounded-full bg-foreground transition-[width] duration-300"
-            style={{ width: `${progress}%` }}
+            style={{
+              width: `${progress}%`,
+            }}
           />
         </div>
       </div>

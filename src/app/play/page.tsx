@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Gamepad2, Sparkles } from 'lucide-react';
 
 import { SectionHeading } from '@/components/shared/section-heading';
@@ -6,7 +7,7 @@ import { GameCard, games } from '@/features/play';
 export default function PlayPage() {
   const featuredGame = games.find((game) => game.status === 'available');
 
-  const upcomingGames = games.filter((game) => game.status === 'coming-soon');
+  const otherGames = games.filter((game) => game.title !== featuredGame?.title);
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
@@ -21,7 +22,7 @@ export default function PlayPage() {
           <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
             <div className="p-7 sm:p-10 lg:p-14">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-background/10">
-                <Gamepad2 className="size-6" />
+                <Gamepad2 className="size-6" aria-hidden="true" />
               </div>
 
               <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-background/50">
@@ -36,12 +37,12 @@ export default function PlayPage() {
                 {featuredGame.description}
               </p>
 
-              <a
+              <Link
                 href={featuredGame.href}
                 className="mt-8 inline-flex items-center rounded-full bg-background px-6 py-3 text-sm font-semibold text-foreground transition-opacity hover:opacity-85"
               >
                 Play now
-              </a>
+              </Link>
             </div>
 
             <div className="relative hidden min-h-72 items-center justify-center overflow-hidden bg-background/5 lg:flex">
@@ -49,27 +50,33 @@ export default function PlayPage() {
               <div className="absolute size-40 rounded-full border border-background/10" />
               <div className="absolute size-24 rounded-full bg-background/10" />
 
-              <Sparkles className="relative size-10 text-background/70" />
+              <Sparkles
+                className="relative size-10 text-background/70"
+                aria-hidden="true"
+              />
             </div>
           </div>
         </section>
       ) : null}
 
       <section className="mt-16">
-        <div className="flex items-end justify-between gap-6">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              More to play
-            </p>
+        <div className="max-w-2xl">
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
+            Game library
+          </p>
 
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-              Pick your kind of fun.
-            </h2>
-          </div>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+            Pick your kind of fun.
+          </h2>
+
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
+            Fast reflexes, memory, visual attention, or typing speed. Every game
+            is built to start instantly.
+          </p>
         </div>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {upcomingGames.map((game) => (
+          {otherGames.map((game) => (
             <GameCard key={game.title} {...game} />
           ))}
         </div>

@@ -26,7 +26,7 @@ export const games: GameCardData[] = [
     category: 'Memory',
     href: '/play/memory',
     icon: Grid2X2,
-    status: 'coming-soon',
+    status: 'available',
   },
   {
     title: 'Reaction Test',
@@ -34,15 +34,15 @@ export const games: GameCardData[] = [
     category: 'Reaction',
     href: '/play/reaction',
     icon: Clock3,
-    status: 'coming-soon',
+    status: 'available',
   },
   {
     title: 'Odd One Out',
-    description: 'Find the tiny visual difference before everyone else does.',
+    description: 'Find the tiny visual difference before the clock runs out.',
     category: 'Visual',
     href: '/play/odd-one-out',
     icon: Eye,
-    status: 'coming-soon',
+    status: 'available',
   },
   {
     title: 'Word Sprint',
@@ -50,7 +50,7 @@ export const games: GameCardData[] = [
     category: 'Words',
     href: '/play/word-sprint',
     icon: Keyboard,
-    status: 'coming-soon',
+    status: 'available',
   },
   {
     title: 'Brain Blitz',

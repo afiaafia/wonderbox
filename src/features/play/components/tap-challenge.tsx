@@ -1,30 +1,39 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { RotateCcw, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
+
+import { GameResult } from './game-result';
 
 const DURATION = 10;
 
 type Phase = 'idle' | 'running' | 'finished';
 
+function getStoredBest() {
+  if (typeof window === 'undefined') {
+    return 0;
+  }
+
+  const saved = Number(window.localStorage.getItem('wonderbox-tap-best'));
+
+  return Number.isFinite(saved) ? saved : 0;
+}
+
 export function TapChallenge() {
   const [phase, setPhase] = useState<Phase>('idle');
+
   const [timeLeft, setTimeLeft] = useState(DURATION);
+
   const [score, setScore] = useState(0);
-  const [best, setBest] = useState(0);
+
+  const [best, setBest] = useState<number>(getStoredBest);
 
   const scoreRef = useRef(0);
 
   useEffect(() => {
-    const saved = Number(localStorage.getItem('wonderbox-tap-best'));
-
-    if (Number.isFinite(saved)) {
-      setBest(saved);
+    if (phase !== 'running') {
+      return;
     }
-  }, []);
-
-  useEffect(() => {
-    if (phase !== 'running') return;
 
     const timer = window.setInterval(() => {
       setTimeLeft((value) => {
@@ -36,13 +45,18 @@ export function TapChallenge() {
           setScore(finalScore);
           setPhase('finished');
 
-          if (finalScore > best) {
-            setBest(finalScore);
-            localStorage.setItem(
+          setBest((currentBest) => {
+            if (finalScore <= currentBest) {
+              return currentBest;
+            }
+
+            window.localStorage.setItem(
               'wonderbox-tap-best',
-              String(finalScore),
+              String(finalScore)
             );
-          }
+
+            return finalScore;
+          });
 
           return 0;
         }
@@ -52,7 +66,7 @@ export function TapChallenge() {
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [phase, best]);
+  }, [phase]);
 
   function start() {
     scoreRef.current = 0;
@@ -62,14 +76,12 @@ export function TapChallenge() {
   }
 
   function tap() {
-    if (phase !== 'running') return;
+    if (phase !== 'running') {
+      return;
+    }
 
     scoreRef.current += 1;
     setScore(scoreRef.current);
-  }
-
-  function restart() {
-    start();
   }
 
   return (
@@ -86,7 +98,7 @@ export function TapChallenge() {
         </div>
 
         <div className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm">
-          <Trophy className="size-4" />
+          <Trophy className="size-4" aria-hidden="true" />
           Best: <strong>{best}</strong>
         </div>
       </div>
@@ -105,6 +117,7 @@ export function TapChallenge() {
             <p className="text-xs uppercase tracking-widest text-muted-foreground">
               Time
             </p>
+
             <p className="mt-1 text-4xl font-semibold tabular-nums">
               {timeLeft}s
             </p>
@@ -114,9 +127,8 @@ export function TapChallenge() {
             <p className="text-xs uppercase tracking-widest text-muted-foreground">
               Score
             </p>
-            <p className="mt-1 text-4xl font-semibold tabular-nums">
-              {score}
-            </p>
+
+            <p className="mt-1 text-4xl font-semibold tabular-nums">{score}</p>
           </div>
         </div>
 
@@ -129,28 +141,29 @@ export function TapChallenge() {
           {phase === 'running' ? 'Tap!' : 'Tap'}
         </button>
 
-        <div className="mt-8">
-          {phase === 'idle' && (
-            <button
-              type="button"
-              onClick={start}
-              className="rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background"
-            >
-              Start challenge
-            </button>
-          )}
+        {phase === 'idle' ? (
+          <button
+            type="button"
+            onClick={start}
+            className="mt-8 rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background"
+          >
+            Start challenge
+          </button>
+        ) : null}
 
-          {phase === 'finished' && (
-            <button
-              type="button"
-              onClick={restart}
-              className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background"
-            >
-              <RotateCcw className="size-4" />
-              Play again
-            </button>
-          )}
-        </div>
+        {phase === 'finished' ? (
+          <div className="mt-8">
+            <GameResult
+              eyebrow="Challenge complete"
+              title={`${score} taps`}
+              description="Run it again and try to beat your personal best."
+              primaryLabel="Play again"
+              onPrimary={start}
+              bestLabel="Best score"
+              bestValue={best}
+            />
+          </div>
+        ) : null}
       </div>
     </section>
   );
