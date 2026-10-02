@@ -3,14 +3,14 @@ import { TapChallenge } from '@/features/play';
 
 export default function PlayPage() {
   return (
-    <main className="mx-auto min-h-[calc(100vh-8rem)] w-full max-w-5xl px-6 py-14 sm:py-20 lg:px-8">
+    <main className="mx-auto min-h-screen w-full max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
       <SectionHeading
         eyebrow="Play World"
         title="10-Second Tap Challenge"
         description="How fast can you tap? You have ten seconds to set a score and beat your personal best."
       />
 
-      <div className="mt-10 sm:mt-12">
+      <div className="mt-10">
         <TapChallenge />
       </div>
     </main>

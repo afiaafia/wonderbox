@@ -1,399 +1,209 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RotateCcw, Share2, Sparkles, Timer, Trophy } from 'lucide-react';
 
-const CHALLENGE_DURATION_MS = 10_000;
-const PERSONAL_BEST_KEY = 'wonderbox:play:tap-challenge:personal-best';
-const PERSONAL_BEST_EVENT = 'wonderbox:tap-challenge-personal-best-change';
+const DURATION = 10_000;
+const STORAGE_KEY = 'wonderbox:tap-best';
 
-type ChallengePhase = 'idle' | 'running' | 'finished';
+type Phase = 'idle' | 'running' | 'finished';
 
-function getPersonalBest() {
-  try {
-    const savedBest = Number(window.localStorage.getItem(PERSONAL_BEST_KEY));
+function getBestScore() {
+  if (typeof window === 'undefined') return 0;
 
-    return Number.isSafeInteger(savedBest) && savedBest > 0 ? savedBest : 0;
-  } catch {
-    return 0;
-  }
-}
-
-function getServerSnapshot() {
-  return 0;
-}
-
-function subscribeToPersonalBest(onChange: () => void) {
-  window.addEventListener('storage', onChange);
-  window.addEventListener(PERSONAL_BEST_EVENT, onChange);
-
-  return () => {
-    window.removeEventListener('storage', onChange);
-    window.removeEventListener(PERSONAL_BEST_EVENT, onChange);
-  };
-}
-
-function savePersonalBest(score: number) {
-  if (score <= getPersonalBest()) {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(PERSONAL_BEST_KEY, String(score));
-
-    window.dispatchEvent(new Event(PERSONAL_BEST_EVENT));
-  } catch {
-    // The round remains playable when browser storage is unavailable.
-  }
+  const value = Number(window.localStorage.getItem(STORAGE_KEY));
+  return Number.isSafeInteger(value) && value > 0 ? value : 0;
 }
 
 export function TapChallenge() {
-  const [phase, setPhase] = useState<ChallengePhase>('idle');
-  const [remainingMs, setRemainingMs] = useState(CHALLENGE_DURATION_MS);
-  const [tapCount, setTapCount] = useState(0);
-  const [finalScore, setFinalScore] = useState(0);
-  const [earnedNewBest, setEarnedNewBest] = useState(false);
-  const [shareMessage, setShareMessage] = useState('');
-
-  const personalBest = useSyncExternalStore(
-    subscribeToPersonalBest,
-    getPersonalBest,
-    getServerSnapshot
-  );
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [score, setScore] = useState(0);
+  const [best, setBest] = useState(0);
+  const [remaining, setRemaining] = useState(DURATION);
+  const [shared, setShared] = useState('');
 
   const startedAt = useRef(0);
-  const tapCountRef = useRef(0);
+  const scoreRef = useRef(0);
 
   useEffect(() => {
-    if (phase !== 'running') {
-      return;
-    }
+    setBest(getBestScore());
+  }, []);
 
-    const tick = () => {
-      const nextRemainingMs = Math.max(
-        0,
-        CHALLENGE_DURATION_MS - (Date.now() - startedAt.current)
-      );
+  useEffect(() => {
+    if (phase !== 'running') return;
 
-      setRemainingMs(nextRemainingMs);
+    const interval = window.setInterval(() => {
+      const elapsed = Date.now() - startedAt.current;
+      const next = Math.max(0, DURATION - elapsed);
 
-      if (nextRemainingMs === 0) {
-        const score = tapCountRef.current;
+      setRemaining(next);
 
-        setFinalScore(score);
-        setEarnedNewBest(score > getPersonalBest());
-        savePersonalBest(score);
+      if (next === 0) {
+        const finalScore = scoreRef.current;
+        const currentBest = getBestScore();
+
+        setScore(finalScore);
+        setBest(Math.max(currentBest, finalScore));
+
+        if (finalScore > currentBest) {
+          window.localStorage.setItem(STORAGE_KEY, String(finalScore));
+        }
+
         setPhase('finished');
       }
-    };
+    }, 50);
 
-    tick();
-
-    const intervalId = window.setInterval(tick, 40);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
+    return () => window.clearInterval(interval);
   }, [phase]);
 
-  function startChallenge() {
-    tapCountRef.current = 0;
-
-    setTapCount(0);
-    setFinalScore(0);
-    setEarnedNewBest(false);
-    setRemainingMs(CHALLENGE_DURATION_MS);
-    setShareMessage('');
-
+  function start() {
+    scoreRef.current = 0;
     startedAt.current = Date.now();
 
+    setScore(0);
+    setRemaining(DURATION);
+    setShared('');
     setPhase('running');
   }
 
-  function finishChallenge() {
-    const score = tapCountRef.current;
+  function tap() {
+    if (phase !== 'running') return;
 
-    setRemainingMs(0);
-    setFinalScore(score);
-    setEarnedNewBest(score > getPersonalBest());
-    savePersonalBest(score);
-    setPhase('finished');
+    if (Date.now() - startedAt.current >= DURATION) {
+      setRemaining(0);
+      setPhase('finished');
+      return;
+    }
+
+    scoreRef.current += 1;
+    setScore(scoreRef.current);
   }
 
-  function handleTap() {
-    if (phase !== 'running') {
-      return;
-    }
-
-    if (Date.now() - startedAt.current >= CHALLENGE_DURATION_MS) {
-      finishChallenge();
-      return;
-    }
-
-    tapCountRef.current += 1;
-
-    setTapCount(tapCountRef.current);
-  }
-
-  async function handleShare() {
-    const result =
-      `I scored ${finalScore} ${
-        finalScore === 1 ? 'tap' : 'taps'
-      } in WonderBox's 10-Second Tap Challenge. ` +
-      `Can you beat me? ${window.location.origin}/play`;
-
-    if (typeof navigator.share === 'function') {
-      try {
-        await navigator.share({
-          title: 'My WonderBox Tap Challenge score',
-          text: result,
-        });
-
-        setShareMessage('Your result is ready to share.');
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          setShareMessage('');
-        } else {
-          setShareMessage('Sharing is unavailable right now.');
-        }
-      }
-
-      return;
-    }
+  async function share() {
+    const text = `I scored ${score} taps in WonderBox's 10-Second Tap Challenge. Can you beat me? ${window.location.origin}/play`;
 
     try {
-      await navigator.clipboard.writeText(result);
-
-      setShareMessage('Result copied to your clipboard.');
+      if (navigator.share) {
+        await navigator.share({
+          title: 'WonderBox Tap Challenge',
+          text,
+        });
+        setShared('Shared successfully.');
+      } else {
+        await navigator.clipboard.writeText(text);
+        setShared('Result copied to clipboard.');
+      }
     } catch {
-      setShareMessage('Clipboard access is unavailable in this browser.');
+      setShared('Sharing was cancelled or unavailable.');
     }
   }
 
-  const secondsLeft = Math.ceil(remainingMs / 1000);
-
-  const progress = (remainingMs / CHALLENGE_DURATION_MS) * 100;
-
-  const isNewBest = phase === 'finished' && earnedNewBest;
+  const seconds = Math.ceil(remaining / 1000);
 
   return (
-    <section
-      aria-labelledby="tap-challenge-title"
-      className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-7">
+    <section className="overflow-hidden rounded-3xl border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium">
-          <span className="flex size-8 items-center justify-center rounded-full bg-muted">
-            <Sparkles aria-hidden="true" className="size-4" />
-          </span>
+          <Sparkles className="size-4" />
           Quick reflexes, big score
         </div>
 
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
-          <Timer aria-hidden="true" className="size-3.5" />
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Timer className="size-4" />
           10 seconds
-        </span>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-[minmax(0,1fr)_15rem]">
-        <div className="bg-muted/30 p-5 sm:p-8">
-          <div className="mx-auto flex max-w-lg flex-col items-center text-center">
-            <div
-              role="timer"
-              aria-label={`${secondsLeft} ${
-                secondsLeft === 1 ? 'second' : 'seconds'
-              } remaining`}
-              aria-live="off"
-              className="relative mb-5 flex size-28 items-center justify-center rounded-full border-8 border-background bg-background shadow-sm sm:size-32"
-            >
-              <svg
-                aria-hidden="true"
-                className="absolute inset-0 size-full -rotate-90"
-                viewBox="0 0 100 100"
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="46"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeDasharray={`${(progress / 100) * 289} 289`}
-                  strokeLinecap="round"
-                  strokeWidth="3"
-                  className="text-foreground transition-[stroke-dasharray] duration-100"
-                />
-              </svg>
+      <div className="grid md:grid-cols-[1fr_18rem]">
+        <div className="flex flex-col items-center bg-muted/20 px-6 py-10 text-center">
+          <div className="flex size-28 flex-col items-center justify-center rounded-full border-8 border-background bg-background shadow-sm">
+            <span className="text-4xl font-bold tabular-nums">{seconds}</span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              seconds
+            </span>
+          </div>
 
-              <span className="text-center">
-                <span className="block text-4xl font-semibold tabular-nums tracking-tight">
-                  {secondsLeft}
-                </span>
+          <h2 className="mt-6 text-2xl font-semibold">
+            {phase === 'idle'
+              ? 'Ready, set, tap.'
+              : phase === 'running'
+                ? 'Keep it going!'
+                : "Time's up!"}
+          </h2>
 
-                <span className="block text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                  seconds
-                </span>
-              </span>
-            </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {phase === 'idle'
+              ? 'Press start and tap as fast as you can.'
+              : phase === 'running'
+                ? 'Every tap counts.'
+                : `You scored ${score} ${score === 1 ? 'tap' : 'taps'}.`}
+          </p>
 
-            <h2
-              id="tap-challenge-title"
-              className="text-xl font-semibold tracking-tight"
-            >
-              {phase === 'idle'
-                ? 'Ready, set, tap.'
-                : phase === 'running'
-                  ? 'Keep it going!'
-                  : "Time's up!"}
-            </h2>
+          <button
+            type="button"
+            onClick={tap}
+            disabled={phase !== 'running'}
+            className="mt-8 flex aspect-square w-full max-w-xs flex-col items-center justify-center rounded-full border-[10px] border-lime-100 bg-lime-300 text-zinc-950 transition-transform hover:bg-lime-200 active:scale-95 disabled:cursor-not-allowed disabled:border-muted disabled:bg-muted disabled:text-muted-foreground"
+          >
+            <span className="text-5xl font-black uppercase">
+              {phase === 'running' ? 'Tap!' : 'Tap'}
+            </span>
 
-            <p
-              id="tap-challenge-instructions"
-              className="mt-2 min-h-6 text-sm text-muted-foreground"
-            >
-              {phase === 'idle'
-                ? 'Press start, then tap the button as fast as you can.'
-                : phase === 'running'
-                  ? 'Every tap counts. Keep going until the timer ends.'
-                  : 'That was quick. See if you can beat your score.'}
-            </p>
+            <span className="mt-1 text-xs font-semibold uppercase tracking-widest">
+              {phase === 'running' ? 'Tap fast' : '10 seconds'}
+            </span>
+          </button>
 
+          {phase === 'idle' && (
             <button
               type="button"
-              onClick={handleTap}
-              disabled={phase !== 'running'}
-              aria-describedby="tap-challenge-instructions"
-              className={[
-                'mt-7 flex aspect-square w-full max-w-[15rem] touch-manipulation select-none flex-col items-center justify-center rounded-full border-[10px] border-lime-100 bg-lime-300 text-zinc-950 shadow-[0_14px_40px_-16px_rgba(0,0,0,0.35)] transition-transform duration-100 sm:max-w-[17rem]',
-                phase === 'running'
-                  ? 'cursor-pointer hover:bg-lime-200 active:scale-95'
-                  : 'cursor-not-allowed border-muted bg-muted text-muted-foreground shadow-none',
-                'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-foreground/40',
-              ].join(' ')}
+              onClick={start}
+              className="mt-7 rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background"
             >
-              <span className="text-4xl font-black uppercase tracking-tight sm:text-5xl">
-                {phase === 'running' ? 'Tap!' : 'Tap'}
-              </span>
-
-              <span className="mt-1 text-xs font-semibold uppercase tracking-[0.22em] opacity-70">
-                {phase === 'running' ? 'Tap fast' : '10 seconds'}
-              </span>
+              Start challenge
             </button>
+          )}
 
-            <p className="mt-5 text-sm text-muted-foreground">
-              {phase === 'running' ? (
-                <>
-                  <span className="font-semibold tabular-nums text-foreground">
-                    {tapCount}
-                  </span>{' '}
-                  {tapCount === 1 ? 'tap' : 'taps'} so far
-                </>
-              ) : phase === 'finished' ? (
-                <>
-                  You scored{' '}
-                  <span className="font-semibold tabular-nums text-foreground">
-                    {finalScore}
-                  </span>{' '}
-                  {finalScore === 1 ? 'tap' : 'taps'}
-                </>
-              ) : (
-                'Your score will appear here.'
-              )}
-            </p>
-
-            {phase === 'idle' ? (
+          {phase === 'finished' && (
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
               <button
                 type="button"
-                onClick={startChallenge}
-                className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-foreground px-6 text-sm font-semibold text-background transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/50"
+                onClick={start}
+                className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-semibold text-background"
               >
-                Start challenge
+                <RotateCcw className="size-4" />
+                Play again
               </button>
-            ) : null}
 
-            {phase === 'finished' ? (
-              <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={startChallenge}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-foreground px-5 text-sm font-semibold text-background transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/50"
-                >
-                  <RotateCcw aria-hidden="true" className="size-4" />
-                  Play again
-                </button>
+              <button
+                type="button"
+                onClick={share}
+                className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-semibold"
+              >
+                <Share2 className="size-4" />
+                Share result
+              </button>
+            </div>
+          )}
 
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-border bg-background px-5 text-sm font-semibold transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/50"
-                >
-                  <Share2 aria-hidden="true" className="size-4" />
-                  Share result
-                </button>
-              </div>
-            ) : null}
-
-            <p
-              role="status"
-              aria-live="polite"
-              className="mt-3 min-h-5 text-xs text-muted-foreground"
-            >
-              {shareMessage}
-            </p>
-          </div>
+          <p className="mt-4 min-h-5 text-xs text-muted-foreground">{shared}</p>
         </div>
 
-        <aside className="flex flex-col gap-3 border-t border-border p-5 sm:p-6 md:border-l md:border-t-0">
-          <div className="rounded-2xl border border-border bg-background p-5">
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              <Trophy aria-hidden="true" className="size-4" />
+        <aside className="border-t border-border p-6 md:border-l md:border-t-0">
+          <div className="rounded-2xl border border-border p-5">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+              <Trophy className="size-4" />
               Personal best
             </div>
 
-            <p className="mt-4 text-4xl font-semibold tabular-nums tracking-tight">
-              {personalBest}
-              <span className="ml-2 text-sm font-medium text-muted-foreground">
-                {personalBest === 1 ? 'tap' : 'taps'}
-              </span>
-            </p>
+            <p className="mt-4 text-4xl font-bold tabular-nums">{best}</p>
 
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Saved on this device, so it’ll be here next time.
-            </p>
-          </div>
-
-          <div className="flex flex-1 flex-col justify-between rounded-2xl bg-foreground p-5 text-background">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-background/60">
-              {isNewBest ? 'New personal best' : 'Your score'}
-            </p>
-
-            <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight">
-              {phase === 'finished'
-                ? finalScore
-                : phase === 'running'
-                  ? tapCount
-                  : '—'}
-            </p>
-
-            <p className="mt-2 text-xs leading-5 text-background/60">
-              {phase === 'finished'
-                ? isNewBest
-                  ? 'A new record to celebrate.'
-                  : 'Every round is a fresh chance.'
-                : 'Your round score will show here.'}
+              Your best score is saved on this device.
             </p>
           </div>
         </aside>
       </div>
-
-      <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {phase === 'running'
-          ? 'Challenge started. Tap as fast as you can.'
-          : phase === 'finished'
-            ? `Challenge complete. Your score is ${finalScore} ${
-                finalScore === 1 ? 'tap' : 'taps'
-              }.`
-            : 'Challenge ready. Press Start challenge when you are ready.'}
-      </p>
     </section>
   );
 }
